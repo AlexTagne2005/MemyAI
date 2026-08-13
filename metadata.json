@@ -1,0 +1,6 @@
+{
+  "name": "MemeAI - Magic Meme Generator",
+  "description": "AI-powered meme generator featuring Magic AI Caption image analysis, custom text overlays, viral templates, stickers, and instant download.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

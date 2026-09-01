@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect , useMemo} from 'react';
 import { MEME_TEMPLATES } from '../data/memeTemplates';
 import { MemeTemplate, MemeCategory } from '../types';
 import { Search, Upload, Sparkles, Flame, Image as ImageIcon, Check, Heart } from 'lucide-react';
@@ -50,6 +50,9 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     }
   }, [favoriteIds]);
 
+
+  const favoriteIdsSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
+
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setFavoriteIds((prev) =>
@@ -62,7 +65,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       activeCategory === 'all'
         ? true
         : activeCategory === 'favorites'
-        ? favoriteIds.includes(template.id)
+        ? favoriteIdsSet.has(template.id)
         : template.category === activeCategory;
 
     const matchesSearch =
@@ -215,7 +218,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
           {filteredTemplates.map((template) => {
             const isSelected = selectedTemplateId === template.id;
-            const isFavorite = favoriteIds.includes(template.id);
+            const isFavorite = favoriteIdsSet.has(template.id);
             return (
               <button
                 key={template.id}

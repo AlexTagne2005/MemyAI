@@ -3,6 +3,36 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
+import dns from 'dns';
+import { promisify } from 'util';
+
+const lookup = promisify(dns.lookup);
+
+function isPrivateIP(ip: string): boolean {
+  const parts = ip.split('.').map(Number);
+  if (parts.length === 4) {
+    if (parts[0] === 10 || parts[0] === 127 || parts[0] === 0) return true;
+    if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
+    if (parts[0] === 192 && parts[1] === 168) return true;
+    if (parts[0] === 169 && parts[1] === 254) return true;
+  }
+  if (ip.includes(':')) {
+    if (ip === '::1' || ip.startsWith('fc00:') || ip.startsWith('fd00:') || ip.startsWith('fe80:')) return true;
+  }
+  return false;
+}
+
+async function isSafeUrl(urlStr: string): Promise<boolean> {
+  try {
+    const parsed = new URL(urlStr);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+    const { address } = await lookup(parsed.hostname);
+    if (isPrivateIP(address)) return false;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -94,6 +124,9 @@ Keep the texts snappy, short, and formatted for a classic meme layout.
       // Case B: Image is an HTTP / HTTPS URL
       else if (typeof imageBase64 === 'string' && (imageBase64.startsWith('http://') || imageBase64.startsWith('https://'))) {
         try {
+          if (!(await isSafeUrl(imageBase64))) {
+            return res.status(400).json({ error: 'Invalid or blocked image URL' });
+          }
           const imgRes = await fetch(imageBase64);
           if (imgRes.ok) {
             const arrayBuf = await imgRes.arrayBuffer();

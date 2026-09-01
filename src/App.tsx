@@ -64,6 +64,10 @@ export default function App() {
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
+  // Memoize top and bottom text overlays for better performance
+  const topTextOverlay = React.useMemo(() => textOverlays.find((t) => t.id === 'top-text'), [textOverlays]);
+  const bottomTextOverlay = React.useMemo(() => textOverlays.find((t) => t.id === 'bottom-text'), [textOverlays]);
+
   // Push new snapshot into history stack
   const pushState = (newState: CanvasState) => {
     setHistory((prevHistory) => {
@@ -173,8 +177,8 @@ export default function App() {
 
   // Apply AI Magic Caption
   const handleApplyCaption = (topText: string, bottomText: string) => {
-    const top = textOverlays.find((t) => t.id === 'top-text') || textOverlays[0] || INITIAL_TEXT_OVERLAYS[0];
-    const bottom = textOverlays.find((t) => t.id === 'bottom-text') || textOverlays[1] || INITIAL_TEXT_OVERLAYS[1];
+    const top = topTextOverlay || textOverlays[0] || INITIAL_TEXT_OVERLAYS[0];
+    const bottom = bottomTextOverlay || textOverlays[1] || INITIAL_TEXT_OVERLAYS[1];
 
     const newTop = { ...top, text: topText };
     const newBottom = { ...bottom, text: bottomText };
@@ -188,8 +192,8 @@ export default function App() {
 
   // AI Remix / Refine Text
   const handleRemixCaption = async (instruction: string) => {
-    const top = textOverlays.find((t) => t.id === 'top-text')?.text || '';
-    const bottom = textOverlays.find((t) => t.id === 'bottom-text')?.text || '';
+    const top = topTextOverlay?.text || '';
+    const bottom = bottomTextOverlay?.text || '';
 
     const res = await fetch('/api/remix-caption', {
       method: 'POST',
@@ -297,7 +301,7 @@ export default function App() {
 
   // Gallery Save / Delete
   const handleSaveToGallery = (dataUrl: string) => {
-    const topText = textOverlays.find((t) => t.id === 'top-text')?.text || 'Meme';
+    const topText = topTextOverlay?.text || 'Meme';
     const newSaved: SavedMeme = {
       id: `saved-${Date.now()}`,
       title: topText,
@@ -365,8 +369,8 @@ export default function App() {
               currentImageUrl={currentImageUrl}
               onApplyCaption={handleApplyCaption}
               onRemixCaption={handleRemixCaption}
-              currentTopText={textOverlays.find((t) => t.id === 'top-text')?.text || ''}
-              currentBottomText={textOverlays.find((t) => t.id === 'bottom-text')?.text || ''}
+              currentTopText={topTextOverlay?.text || ''}
+              currentBottomText={bottomTextOverlay?.text || ''}
             />
 
             <TextControls
